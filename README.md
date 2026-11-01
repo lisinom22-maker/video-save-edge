@@ -1,4 +1,10 @@
-# Video Save · Edge 网页视频保存助手
+# Video Save · 多浏览器网页视频保存助手
+
+## 多浏览器开发版 1.3.0
+
+新增 Chrome / Edge 共用的 Chromium 包与 Firefox 专用开发包。Firefox 使用浏览器原生下载，默认保存到下载目录 / VideoDownloads；永久安装需要 Mozilla 签名，当前可通过 about:debugging 临时加载。本机无 Firefox，尚未完成 Firefox 实机验收。
+
+安装和验证范围见 [多浏览器说明](docs/multi-browser.md)。运行 `python tools/package-browsers.py` 生成独立安装包；需先运行 `node tools/restore-wasm.mjs` 恢复依赖。原有 1.2.3 为已发布稳定版。
 
 鼠标悬停视频、封面或视频链接，按 **Ctrl+C** 保存到本地。当前版本 **1.2.3**。
 

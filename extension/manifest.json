@@ -1,14 +1,69 @@
 {
   "manifest_version": 3,
   "name": "Video Save · 网页视频保存助手",
-  "version": "1.2.3",
+  "version": "1.3.0",
   "description": "鼠标悬停视频、封面或视频链接，按Ctrl+C保存。支持普通MP4/WebM和B站音视频合并，可选系统视频文件夹统一保存。",
   "minimum_chrome_version": "116",
-  "permissions": ["scripting", "declarativeNetRequestWithHostAccess", "storage"],
-  "host_permissions": ["http://*/*", "https://*/*"],
-  "background": { "service_worker": "background.mjs", "type": "module" },
-  "action": { "default_title": "视频下载面板 · 悬停视频按Ctrl+C可直接下载", "default_icon": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" } },
-  "icons": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" },
-  "content_scripts": [{ "matches": ["http://*/*", "https://*/*"], "js": ["quick-rules.js", "quick-content.js"], "css": ["quick.css"], "all_frames": true, "run_at": "document_idle" }, { "matches": ["https://www.bilibili.com/video/*", "https://bilibili.com/video/*", "https://m.bilibili.com/video/*"], "js": ["content.js"], "run_at": "document_idle" }],
-  "content_security_policy": { "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; worker-src 'self'; connect-src 'self' http: https:; img-src 'self' https://*.hdslb.com data:; style-src 'self'; base-uri 'none';" }
+  "permissions": [
+    "scripting",
+    "declarativeNetRequestWithHostAccess",
+    "storage",
+    "downloads"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.mjs",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "视频下载面板 · 悬停视频按Ctrl+C可直接下载",
+    "default_icon": {
+      "16": "icons/16.png",
+      "32": "icons/32.png",
+      "48": "icons/48.png",
+      "128": "icons/128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/16.png",
+    "32": "icons/32.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "compat.js",
+        "quick-rules.js",
+        "quick-content.js"
+      ],
+      "css": [
+        "quick.css"
+      ],
+      "all_frames": true,
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.bilibili.com/video/*",
+        "https://bilibili.com/video/*",
+        "https://m.bilibili.com/video/*"
+      ],
+      "js": [
+        "compat.js",
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; worker-src 'self'; connect-src 'self' http: https:; img-src 'self' https://*.hdslb.com data:; style-src 'self'; base-uri 'none';"
+  }
 }

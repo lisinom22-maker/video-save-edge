@@ -7,7 +7,7 @@ export function ensureQuickContent(tabId) {
   const job = (async () => {
     const alive = await chrome.tabs.sendMessage(tabId, { type: 'vs-quick-ping' }, { frameId: 0 }).catch(() => null);
     if (alive?.ready && alive.version === chrome.runtime.getManifest().version) return;
-    await chrome.scripting.executeScript({ target: { tabId, allFrames: true }, files: ['quick-rules.js', 'quick-content.js'] });
+    await chrome.scripting.executeScript({ target: { tabId, allFrames: true }, files: ['compat.js', 'quick-rules.js', 'quick-content.js'] });
     await chrome.scripting.insertCSS({ target: { tabId, allFrames: true }, files: ['quick.css'] });
   })().finally(() => pending.delete(tabId));
   pending.set(tabId, job);

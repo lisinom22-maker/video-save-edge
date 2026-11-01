@@ -1,3 +1,5 @@
+import { nativeSave } from './native-output.mjs';
+export const usesNativeDownloads = () => !!globalThis.chrome?.downloads && (globalThis.chrome.runtime.getManifest().browser_specific_settings?.gecko || (typeof window !== 'undefined' && !globalThis.showDirectoryPicker));
 const DB_NAME = 'video-save-output';
 let database;
 async function db() {
@@ -31,6 +33,7 @@ export async function setOutputDirectory(handle) {
   return outputStatus();
 }
 export async function outputStatus() {
+  if (usesNativeDownloads()) return { allowed: true, native: true, label: '浏览器下载目录 / VideoDownloads' };
   try {
     const directory = await selectedDirectory();
     if (!directory) return { allowed: false, label: '尚未选择系统“视频”文件夹' };
@@ -39,6 +42,7 @@ export async function outputStatus() {
   } catch { return { allowed: false, label: '需要重新选择保存文件夹' }; }
 }
 export async function chooseOutputDirectory() {
+  if (usesNativeDownloads()) return outputStatus();
   if (!globalThis.showDirectoryPicker) throw new Error('当前浏览器不支持文件夹选择，请使用新版 Edge。');
   const handle = await showDirectoryPicker({ id: 'video-save-output', startIn: 'videos', mode: 'readwrite' });
   return setOutputDirectory(handle);
@@ -95,6 +99,8 @@ export async function writeFileToDirectory(directory, source, requestedName, { s
   }
 }
 export async function saveToSelectedDirectory(source, filename, options = {}) {
+  validFilename(filename);
+  if (usesNativeDownloads()) return nativeSave(source, filename, options);
   const root = await selectedDirectory();
   if (!root || await root.queryPermission({ mode: 'readwrite' }) !== 'granted') throw new Error('请先点击“选择视频文件夹”，允许保存到系统“视频”位置。');
   const directory = root.name === 'VideoDownloads' ? root : await root.getDirectoryHandle('VideoDownloads', { create: true });

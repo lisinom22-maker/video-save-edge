@@ -7,7 +7,7 @@ export async function inspectGeneric(tabId, token, frameId = 0, waitForMedia = f
     if (!response?.ok || !response.target) throw new Error(response?.error || '视频已变化，请重新悬停并按 Ctrl+C。');
     targets = [{ ...response.target, frameId }];
   } else {
-    await chrome.scripting.executeScript({ target: { tabId, allFrames: true }, files: ['quick-rules.js', 'quick-content.js'] });
+    await chrome.scripting.executeScript({ target: { tabId, allFrames: true }, files: ['compat.js', 'quick-rules.js', 'quick-content.js'] });
     await chrome.scripting.insertCSS({ target: { tabId, allFrames: true }, files: ['quick.css'] });
     const deadline = Date.now() + (waitForMedia ? 15000 : 0);
     let candidate = '', stableSince = 0, firstCandidateAt = 0, acceptedTargets = [];
