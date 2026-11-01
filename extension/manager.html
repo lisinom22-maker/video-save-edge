@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Video Save · 网页视频保存助手</title>
+  <link rel="icon" href="icons/32.png">
+  <link rel="stylesheet" href="manager.css">
+  <script src="vendor/ffmpeg/ffmpeg.js" defer></script>
+  <script type="module" src="manager.mjs"></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="manager.html" aria-label="Video Save 首页"><img src="icons/48.png" width="38" height="38" alt=""><span>Video Save<small>网页视频保存助手</small></span></a>
+    <div class="side-label">工作空间</div>
+    <div class="nav-current"><span aria-hidden="true">↧</span> 视频下载 <span class="nav-dot"></span></div>
+    <div class="side-note"><span class="privacy-icon" aria-hidden="true">✓</span><strong>在你的浏览器里完成</strong><p>视频下载与合并均在本地处理，<br>无需上传，也无需额外程序。</p></div>
+    <div class="side-bottom"><span class="version">v1.2.3</span><span>为离线观看而造</span></div>
+  </aside>
+  <main>
+    <header class="topbar"><span>工作空间 <span class="slash">/</span> 视频下载</span><span class="local-badge"><i></i> 本地处理</span></header>
+    <section class="output-card" aria-label="保存文件夹"><div><h2>保存到系统“视频”</h2><p id="output-path">正在检查保存位置…</p><small id="output-help">首次选择后会记住保存位置。</small></div><button id="choose-output" type="button" class="secondary">选择视频文件夹</button></section>
+    <section class="intro"><div class="eyebrow">YOUR VIDEO, OFFLINE.</div><h1>指向视频或封面，按 Ctrl+C。</h1><p>首次选定系统“视频”位置，后续自动保存；这里也可手动选择视频和画质。</p></section>
+    <section id="empty" class="empty-state" hidden>
+      <div class="empty-icon" aria-hidden="true">↗</div><h2>先打开一个网页视频</h2><p id="empty-message">普通网站或 B站：鼠标悬停视频画面、封面或视频链接后按 Ctrl+C。未点开的条目也可在后台解析。</p><a class="primary link-button" href="https://www.bilibili.com" target="_blank" rel="noreferrer">打开 B站 <span aria-hidden="true">↗</span></a>
+    </section>
+    <section id="workspace" aria-label="视频下载工作区">
+      <div class="section-heading"><h2>当前视频</h2><button id="refresh" class="text-button" type="button"><span aria-hidden="true">↻</span> 重新识别</button></div>
+      <article class="video-card">
+        <div class="cover"><img id="cover" alt="视频封面" hidden><div id="cover-placeholder" class="cover-placeholder"><span class="play-circle" aria-hidden="true">▶</span><span>BILIBILI VIDEO</span></div><span id="duration" class="duration" hidden></span></div>
+        <div class="video-info"><div class="video-kicker"><span>BILIBILI</span><span id="video-id">读取页面中</span></div><h2 id="video-title">正在识别当前视频…</h2><p class="creator"><span class="avatar" aria-hidden="true">UP</span><span id="owner">请稍候</span></p><div id="account" class="account">正在读取可用画质</div></div>
+      </article>
+      <section class="options-card" aria-label="下载设置">
+        <div class="settings-grid"><div class="field"><label for="part">分P</label><select id="part" disabled><option>正在读取…</option></select></div><div class="field"><label for="quality">清晰度与编码</label><select id="quality" disabled><option>正在读取…</option></select></div></div>
+        <p class="quality-note" id="quality-note">仅列出当前账号可获取的画质，优先选择兼容性更好的 H.264。</p>
+        <div class="download-row"><button id="download" type="button" class="primary" disabled><span aria-hidden="true">↓</span> 下载 MP4</button><span class="download-hint">带画面，也带声音。<small>首次点击下载即可选择保存文件夹</small></span></div>
+        <div class="secondary-row"><button id="audio" class="secondary" type="button" disabled><span aria-hidden="true">♫</span> 仅保存音频</button><button id="poster" class="secondary" type="button" disabled><span aria-hidden="true">▧</span> 保存封面</button><span class="save-option">统一保存到 VideoDownloads</span></div>
+      </section>
+      <section class="task-card" aria-label="下载任务"><div class="task-header"><h2>下载任务</h2><span id="task-tag" class="task-tag">准备就绪</span></div><div class="task-body"><div id="task-icon" class="task-icon" aria-hidden="true">↓</div><div class="task-copy" role="status" aria-live="polite"><h3 id="status-title">准备好，就下载吧</h3><p id="status-detail">选择分P和清晰度，文件将保存到选定的 VideoDownloads 文件夹。</p></div><button id="cancel" class="secondary" type="button" hidden>取消下载</button><button id="retry" class="secondary" type="button" hidden>重试下载</button></div><progress id="progress" max="1" value="0" aria-label="任务进度" hidden></progress><div id="task-foot" class="task-foot" hidden><span id="progress-text"></span><span>下载时请保留来源视频页与此面板</span></div></section>
+      <div class="error-box" id="error" role="alert" hidden></div>
+    </section>
+    <footer><p>文字选区和输入框中的 Ctrl+C 保持正常复制。首次选择系统“视频”文件夹后，后续统一保存到其 VideoDownloads 子目录。</p><p>支持视频封面与链接、普通 HTML5 MP4 / WebM、可读取 Blob 和 B站普通视频 · B站合并 / Blob 上限 384 MiB · 暂不支持通用 HLS / DASH、直播和 DRM</p></footer>
+  </main>
+</body>
+</html>
+

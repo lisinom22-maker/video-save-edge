@@ -1,0 +1,11 @@
+{
+  "name": "bili-save-edge",
+  "version": "1.2.3",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/core.test.mjs tests/transfer.test.mjs tests/quick.test.mjs tests/output.test.mjs tests/discovery.test.mjs tests/background-race.test.mjs",
+    "check": "node tools/check.mjs",
+    "package": "node tools/package.mjs"
+  }
+}

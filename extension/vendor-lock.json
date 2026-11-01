@@ -1,0 +1,26 @@
+[
+  {
+    "file": "vendor/ffmpeg/ffmpeg.js",
+    "url": "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.js",
+    "upstreamSHA256": "ad4cfe957589995dea03fc8de1fd5e9f5cb4558a7282913172203082a65bbfaa",
+    "bundledSHA256": "60f0ebdf428e69543bc8b6a4a1c26270cbc7766c57358f2e295be6000df6a1c3"
+  },
+  {
+    "file": "vendor/ffmpeg/814.ffmpeg.js",
+    "url": "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/814.ffmpeg.js",
+    "upstreamSHA256": "976f4174ae7da80c0d4f9523ee6dde3ecbce7dc2ee392b2a5322049abb9b8627",
+    "bundledSHA256": "3985d0353111fb9ce3753defffca0c00914ee9c3906aa9e8ec12911cc5c3a122"
+  },
+  {
+    "file": "vendor/core/ffmpeg-core.js",
+    "url": "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js",
+    "upstreamSHA256": "b266ab5b952555881dd6310663986994a182acb2b7ff25cf10a25f7a37ac2b21",
+    "bundledSHA256": "b266ab5b952555881dd6310663986994a182acb2b7ff25cf10a25f7a37ac2b21"
+  },
+  {
+    "file": "vendor/core/ffmpeg-core.wasm",
+    "url": "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.wasm",
+    "upstreamSHA256": "9f57947a5bd530d8f00c5b3f2cb2a3492faa7e5d823315342d6a8656d0a6b7b7",
+    "bundledSHA256": "9f57947a5bd530d8f00c5b3f2cb2a3492faa7e5d823315342d6a8656d0a6b7b7"
+  }
+]

@@ -1,0 +1,7 @@
+.test/
+dist/
+node_modules/
+*.log
+
+# Download the pinned runtime with node tools/restore-wasm.mjs
+/extension/vendor/core/ffmpeg-core.wasm

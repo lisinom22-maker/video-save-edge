@@ -1,0 +1,87 @@
+// Reproduces the real 567 failure: Akamai primary works, Tencent backup rejects.
+import { createRequire } from 'node:module';
+import { readFile, mkdir } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import { configureOutput, saveLastOutput } from './output-test-utils.mjs';
+const require = createRequire(import.meta.url);
+const { chromium } = require(process.env.PLAYWRIGHT_PACKAGE || 'C:/Users/lenovo/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const root = path.resolve(import.meta.dirname, '..');
+const ext = path.join(root, 'extension');
+await mkdir(path.join(root, '.test'), { recursive: true });
+const context = await chromium.launchPersistentContext(path.join(root, '.test/cdn-profile-' + Date.now()), { executablePath: 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', headless: true, acceptDownloads: true, args: [`--disable-extensions-except=${ext}`, `--load-extension=${ext}`, '--no-first-run'] });
+try {
+  const sw = context.serviceWorkers()[0] || await context.waitForEvent('serviceworker');
+  await configureOutput(context, new URL(sw.url()).host);
+  const primary = 'https://upos-hz-mirrorakam.akamaized.net/';
+  const backup = 'https://upos-sz-mirrorcosov.bilivideo.com/';
+  const meta = { bvid: 'BV1Rbxg6WER5', title: '567 CDN 回归', cid: 22, aid: 1, owner: { name: 'test' }, pages: [{ cid: 22, page: 1, part: '测试', duration: 2 }] };
+  const makeStream = (id, codecs, name) => ({ id, codecs, mimeType: id === 80 ? 'video/mp4' : 'audio/mp4', baseUrl: primary + name, backupUrl: [backup + name] });
+  const info = { data: { dash: { video: [makeStream(80, 'avc1.64001e', 'video.mp4')], audio: [makeStream(30280, 'mp4a.40.2', 'audio.m4a')] } } };
+  await context.route('https://www.bilibili.com/**', r => r.fulfill({ contentType: 'text/html', body: `<html><head><script>window.__INITIAL_STATE__=${JSON.stringify({ videoData: meta, cid: 22 })};window.__playinfo__=${JSON.stringify(info)};</script></head><body><video style="display:block;width:320px;height:180px;background:#ddd"></video></body></html>` }));
+  let slowAPI = false;
+  await context.route('https://api.bilibili.com/**', async r => { if (slowAPI) await new Promise(resolve => setTimeout(resolve, 1800)); await r.fulfill({ status: 412, headers: { 'access-control-allow-origin': 'https://www.bilibili.com', 'access-control-allow-credentials': 'true' }, body: 'Blocked' }).catch(() => {}); });
+  let good = 0, bad = 0;
+  await context.route(primary + '**', async r => { good++; const bytes = await readFile(path.join(root, '.test', r.request().url().endsWith('audio.m4a') ? 'audio.m4a' : 'video.mp4')); await r.fulfill({ contentType: 'video/mp4', headers: { 'access-control-allow-origin': '*', 'content-length': String(bytes.length) }, body: bytes }); });
+  await context.route(backup + '**', r => { bad++; return r.fulfill({ status: 567, headers: { 'access-control-allow-origin': '*' }, body: 'Restricted access' }); });
+  const source = await context.newPage();
+  await source.goto('https://www.bilibili.com/video/BV1Rbxg6WER5/');
+  const tabId = await sw.evaluate(async () => (await chrome.tabs.query({ url: 'https://www.bilibili.com/video/*' }))[0].id);
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${new URL(sw.url()).host}/manager.html?tab=${tabId}`);
+  await page.waitForFunction(() => !document.querySelector('#download').disabled);
+  await page.getByRole('button', { name: '下载 MP4', exact: true }).click();
+  await page.waitForFunction(() => ['文件已保存', '下载未完成'].includes(document.querySelector('#status-title').textContent), null, { timeout: 20000 });
+  const detail = await page.locator('#status-detail').textContent();
+  assert.equal(await page.locator('#status-title').textContent(), '文件已保存', detail);
+  assert.equal(good, 2, 'Video and audio must both retain the player-provided primary CDN');
+  assert.equal(bad, 0, 'Working primary must not fall through to blocked backup');
+  await saveLastOutput(page, path.join(root, '.test/cdn-output.mp4'));
+  // Ctrl+C on Bilibili starts a background task and merges without opening controls manually.
+  await source.bringToFront();
+  await source.locator('video').click();
+  const autoPagePromise = context.waitForEvent('page');
+  await source.locator('video').hover(); await source.keyboard.press('Control+c');
+  const autoPage = await autoPagePromise;
+  await autoPage.getByText('文件已保存', { exact: true }).waitFor({ timeout: 30000 });
+  await new Promise(resolve => setTimeout(resolve, 1800));
+  assert.equal(autoPage.isClosed(), false, 'The saved-file result page must remain open so the user can find the file');
+  await saveLastOutput(autoPage, path.join(root, '.test/cdn-auto-output.mp4'));
+  await source.locator('.vs-quick-toast[data-state="success"]').waitFor({ timeout: 10000 });
+  assert.ok(autoPage.url().includes('auto=1'));
+  // Playback lookup errors must release the shortcut's duplicate-job lock.
+  const retrySource = await context.newPage();
+  await retrySource.goto('https://www.bilibili.com/video/BV1Rbxg6WER5/');
+  await retrySource.evaluate(() => { window.__playinfo__ = null; });
+  await retrySource.locator('video').hover(); await retrySource.keyboard.press('Control+c');
+  await retrySource.locator('.vs-quick-toast[data-state="error"]').waitFor({ timeout: 6000 });
+  assert.equal(await sw.evaluate(async () => Object.keys(await chrome.storage.session.get(null)).filter(k => k.startsWith('vs-job:')).length), 0);
+  await retrySource.evaluate(value => { window.__playinfo__ = value; }, info);
+  const retryPagePromise = context.waitForEvent('page');
+  await retrySource.keyboard.press('Control+c');
+  const retryPage = await retryPagePromise;
+  await retryPage.getByText('文件已保存', { exact: true }).waitFor({ timeout: 30000 });
+  await saveLastOutput(retryPage, path.join(root, '.test/cdn-auto-retry-output.mp4'));
+  await retrySource.locator('.vs-quick-toast[data-state="success"]').waitFor({ timeout: 10000 });
+  // Cancelling while playback lookup is still pending must prevent all CDN downloads.
+  slowAPI = true;
+  const cancelSource = await context.newPage();
+  await cancelSource.goto('https://www.bilibili.com/video/BV1Rbxg6WER5/');
+  const cancelTaskPromise = context.waitForEvent('page');
+  await cancelSource.locator('video').hover(); await cancelSource.keyboard.press('Control+c');
+  const cancelTask = await cancelTaskPromise;
+  await cancelTask.getByText('正在读取当前分P的可用画质…', { exact: true }).waitFor();
+  const beforeCancelRequests = good;
+  const closed = cancelTask.waitForEvent('close');
+  await cancelSource.locator('.vs-quick-toast[data-state="pending"] button').click();
+  await closed;
+  await cancelSource.locator('.vs-quick-toast[data-state="error"]').waitFor();
+  await new Promise(resolve => setTimeout(resolve, 2100));
+  assert.equal(good, beforeCancelRequests, 'No media requests may start after cancellation during API parsing');
+  console.log('PASS: 567 primary-CDN regression, Bilibili Ctrl+C automatic mux, failed-job release, immediate retry and parsing-stage cancel.');
+} catch (error) {
+  console.log('DIAGNOSTIC', JSON.stringify(await Promise.all(context.pages().map(async p => ({ url: p.url(), text: (await p.locator('body').innerText().catch(() => '')).slice(-1800) })))));
+  const worker = context.serviceWorkers()[0];
+  if (worker) console.log('SOURCE STATE', JSON.stringify(await worker.evaluate(async () => { const tabs=await chrome.tabs.query({url:'https://www.bilibili.com/video/*'}); return {session:await chrome.storage.session.get(null), scripts:await chrome.scripting.executeScript({target:{tabId:tabs[0].id},func:()=>({api:!!globalThis.VideoQuickPage, list:globalThis.VideoQuickPage?.list()})})}; })));
+  throw error;
+} finally { await context.close(); }

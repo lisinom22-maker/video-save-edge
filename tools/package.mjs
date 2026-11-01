@@ -1,0 +1,14 @@
+import { readFile, mkdir, writeFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import path from 'node:path';
+const root = path.resolve(import.meta.dirname, '..');
+execFileSync(process.execPath, [path.join(root, 'tools/check.mjs')], { stdio: 'inherit' });
+await mkdir(path.join(root, 'dist'), { recursive: true });
+const { version } = JSON.parse(await readFile(path.join(root, 'extension/manifest.json'), 'utf8'));
+const zip = path.join(root, `dist/Bili-Save-Edge-${version}.zip`);
+execFileSync(process.env.PYTHON || 'python', [path.join(root, 'tools/package.py')], { stdio: 'inherit' });
+const data = await readFile(zip);
+const sha = createHash('sha256').update(data).digest('hex');
+await writeFile(zip + '.sha256', sha + `  Bili-Save-Edge-${version}.zip\n`);
+console.log(`Packaged ${path.basename(zip)} (${(data.length / 1048576).toFixed(1)} MiB)\nSHA-256: ${sha}`);
